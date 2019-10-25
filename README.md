@@ -5,6 +5,7 @@ solar system with opengl
 <img src='img/result.PNG' width=800>
 
 ## TODO
-- [ ] reduce memory usage
+- [x] reduce memory usage
 - [ ] camera travel
 - [ ] other planets
+- [ ] Sphere skybox

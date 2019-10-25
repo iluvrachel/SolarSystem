@@ -3,7 +3,7 @@
 #include "vec.h"
 #include "SOIL.h"
 #include<vector>
-
+#include<string.h>
 #pragma comment(lib, "glew32.lib")
 
 // camera
@@ -20,8 +20,82 @@ GLint matrixLocation;
 //int currentTransform = TRANSFORM_ROTATE;    // 设置当前变换
 int mainWindow;
 
-GLUquadricObj* e_tex = gluNewQuadric();//earth texture
 
+//GLuint load_texture(const char *path)
+//{
+//	unsigned char* image;
+//	int width, height;
+//	GLuint name;
+//	glGenTextures(1, &name);
+//	glBindTexture(GL_TEXTURE_2D, name);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//	image = SOIL_load_image(path, &width, &height, 0, SOIL_LOAD_RGB);
+//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+//	SOIL_free_image_data(image);
+//	glBindTexture(GL_TEXTURE_2D, 0);
+//	return name;
+//}
+
+
+////////////////////Load texture --Reduce memory usage ver.////////////////////////
+typedef struct texture_data {
+	unsigned char* data;
+	int width, height;
+} texture_data;
+
+texture_data load_texture2(const char *path)
+{
+	texture_data t;
+	//unsigned char* image;
+	int width, height;
+	t.data = SOIL_load_image(path, &width, &height, 0, SOIL_LOAD_RGB);
+	t.width = width;
+	t.height = height;
+	//SOIL_free_image_data(image);
+	return t;
+}
+
+GLUquadricObj* e_tex = gluNewQuadric();//texture
+//GLuint sun_tex = load_texture("sun.jpg");
+//GLuint earth_tex = load_texture("earth.jpg");
+//GLuint moon_tex = load_texture("moon.jpg");
+//GLuint sky_tex = load_texture("sky.png");
+
+GLuint all_texture[4];
+texture_data TextureImage[4];// 创建纹理的存储空间
+//memset(TextureImage,0,sizeof(void *) * 4);
+void add_textures() // 载入位图(调用上面的代码)并转换成纹理
+{
+
+	//int Status = FALSE; // 状态指示器
+	
+	memset(TextureImage, 0, sizeof(void *) * 4); // 将指针设为 NULL
+	TextureImage[0] = load_texture2("sun.jpg");
+	TextureImage[1] = load_texture2("earth.jpg");
+	TextureImage[2] = load_texture2("moon.jpg");
+	TextureImage[3] = load_texture2("sky.png");
+
+	glGenTextures(4, &all_texture[0]); // 创建纹理
+	for (int i = 0; i < 4; i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, all_texture[i]);// 生成纹理
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[i].width, TextureImage[i].height, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[i].data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // 线形滤波
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // 线形滤波
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		SOIL_free_image_data(TextureImage[i].data);
+	}
+	
+
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 typedef struct other_planet {
 	char *texture_path;
@@ -41,22 +115,8 @@ typedef struct other_planet {
 } other_planet;
 
 
-GLuint load_texture(const char *path) {
-	unsigned char* image;
-	int width, height;
-	GLuint name;
-	glGenTextures(1, &name);
-	glBindTexture(GL_TEXTURE_2D, name);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	image = SOIL_load_image(path, &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	SOIL_free_image_data(image);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	return name;
-}
+
+
 
 void init()
 {
@@ -67,22 +127,7 @@ void init()
 	glEnable(GL_BLEND);
 
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
-
-	//GLfloat sun_light_position[] = { 0.0f, 0.0f, -300.0f, 1.0f }; //光源的位置在世界坐标系圆心，齐次坐标形式
-	//GLfloat sun_light_ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };     //RGBA模式的环境光，为0
-	//GLfloat sun_light_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };     //RGBA模式的漫反射光，全白光
-	//GLfloat sun_light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };    //RGBA模式下的镜面光 ，全白光
-	//glLightfv(GL_LIGHT0, GL_POSITION, sun_light_position);
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, sun_light_ambient);
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, sun_light_diffuse);
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, sun_light_specular);
-
-	//GLfloat sun_light_ambient[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,sun_light_ambient);
-	//GLfloat sun_light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,sun_light_specular);
-	//glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 5);
-	//glEnable(GL_LIGHT0);
+	add_textures();
 
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_LIGHT0);
@@ -161,7 +206,7 @@ void sun()
 	gluQuadricTexture(e_tex, GLU_TRUE);
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, load_texture("sun.jpg"));
+	glBindTexture(GL_TEXTURE_2D, all_texture[0]);
 	gluSphere(e_tex, 30.0f, 30.0f, 30.0f);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
@@ -215,7 +260,7 @@ void earth()
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_TEXTURE_2D);
 	//glTexEnvf(GL_TEXTURE_2D, GL_TEXTURE_EVN_MODE, GL_REPLACE);
-	glBindTexture(GL_TEXTURE_2D, load_texture("earth.jpg"));
+	glBindTexture(GL_TEXTURE_2D, all_texture[1]);
 	//glColor3ub(0, 0, 255);
 
 	gluSphere(e_tex, 15.0f, 15.0f, 15.0f);
@@ -235,7 +280,7 @@ void earth()
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_TEXTURE_2D);
 	//glTexEnvf(GL_TEXTURE_2D, GL_TEXTURE_EVN_MODE, GL_REPLACE);
-	glBindTexture(GL_TEXTURE_2D, load_texture("moon.jpg"));
+	glBindTexture(GL_TEXTURE_2D, all_texture[2]);
 	gluSphere(e_tex, 4.0f, 15.0f, 15.0f);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -257,7 +302,7 @@ void draw_milky_way(float x, float y, float z, float width, float height, float 
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glDepthMask(GL_FALSE);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, load_texture("sky.png"));
+	glBindTexture(GL_TEXTURE_2D, all_texture[3]);
 
 	//back face
 	glBegin(GL_QUADS);
