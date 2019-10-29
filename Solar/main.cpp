@@ -4,14 +4,14 @@
 #include "SOIL.h"
 #include<vector>
 #include<string.h>
+#include "planet.h"
 #pragma comment(lib, "glew32.lib")
 
 // camera
 
 static int oldmy = -1, oldmx = -1; //du是视点绕y轴的角度,opengl里默认y轴是上方向
 
-
-								 // 相机参数
+// 相机参数
 float radius = 1000.0;
 float rotateAngle = 0.0;
 float upAngle = 0.0;
@@ -64,22 +64,24 @@ GLUquadricObj* e_tex = gluNewQuadric();//texture
 //GLuint moon_tex = load_texture("moon.jpg");
 //GLuint sky_tex = load_texture("sky.png");
 
-GLuint all_texture[4];
-texture_data TextureImage[4];// 创建纹理的存储空间
+const int img_num = 5;
+GLuint all_texture[img_num];
+texture_data TextureImage[img_num];// 创建纹理的存储空间
 //memset(TextureImage,0,sizeof(void *) * 4);
 void add_textures() // 载入位图(调用上面的代码)并转换成纹理
 {
 
 	//int Status = FALSE; // 状态指示器
 	
-	memset(TextureImage, 0, sizeof(void *) * 4); // 将指针设为 NULL
+	memset(TextureImage, 0, sizeof(void *) * img_num); // 将指针设为 NULL
 	TextureImage[0] = load_texture2("sun.jpg");
 	TextureImage[1] = load_texture2("earth.jpg");
 	TextureImage[2] = load_texture2("moon.jpg");
 	TextureImage[3] = load_texture2("sky.png");
+	TextureImage[4] = load_texture2("mars.jpg");
 
-	glGenTextures(4, &all_texture[0]); // 创建纹理
-	for (int i = 0; i < 4; i++)
+	glGenTextures(img_num, &all_texture[0]); // 创建纹理
+	for (int i = 0; i < img_num; i++)
 	{
 		glBindTexture(GL_TEXTURE_2D, all_texture[i]);// 生成纹理
 		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[i].width, TextureImage[i].height, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[i].data);
@@ -87,7 +89,7 @@ void add_textures() // 载入位图(调用上面的代码)并转换成纹理
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // 线形滤波
 	}
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < img_num; i++)
 	{
 		SOIL_free_image_data(TextureImage[i].data);
 	}
@@ -96,24 +98,6 @@ void add_textures() // 载入位图(调用上面的代码)并转换成纹理
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-typedef struct other_planet {
-	char *texture_path;
-	GLuint texture_name;
-	GLdouble radius; // Mean radius, in earths.
-	GLuint display_list;
-	GLdouble tilt; // Axis tilt to orbit, in degrees.
-	GLdouble z_rotation_inverse[16];
-	GLdouble period; // Sidereal rotation period, in days.
-	struct {
-		GLdouble inclination; // Inclination to ecliptic, in degrees.
-		GLdouble radius; // Arithmetic mean of aphelion and perihelion, in AUs.
-		GLuint display_list;
-		GLdouble period; // Orbital period, in days.
-	} orbit;
-	struct body_t *planets[];
-} other_planet;
-
 
 
 
@@ -207,7 +191,7 @@ void sun()
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, all_texture[0]);
-	gluSphere(e_tex, 30.0f, 30.0f, 30.0f);
+	gluSphere(e_tex, 100.0f, 30.0f, 30.0f);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	//glDisable(GL_TEXTURE_2D);
@@ -248,7 +232,7 @@ void earth()
 	static float sEarthRot = 0.0f;
 
 	glRotatef(aEarthRot, 0.0f, 1.0f, 0.0f);
-	glTranslatef(105.0f, 0.0f, 0.0f);
+	glTranslatef(150.0f, 0.0f, 0.0f);
 	//glPushMatrix();
 
 	glRotatef(90, 1.0f, 0.0f, 0.0f);
@@ -294,6 +278,71 @@ void earth()
 
 	glPopMatrix();
 }
+
+
+//////////////////////////////Draw Normal Planets///////////////////////////////////
+//typedef struct other_planet {
+//	float srot;
+//	float arot;
+//	GLdouble radius;
+//	GLuint texture_name;
+//	float distance;
+//	//GLdouble period; // Sidereal rotation period, in days.
+//
+//} other_planet;
+
+// define planets
+//other_planet mars = { 2.0f, 2.0f, 10.0f, all_texture[4], 200.0f };
+
+Planet mars =  Planet(2.0f, 2.0f, 10.0f, all_texture[4], 200.0f);
+//Planet venus = Planet(2.0f, 2.0f, 10.0f, all_texture[4], 250.0f);
+
+void draw_planet(Planet &p)
+{
+	//std::cout << all_texture[1] << std::endl;
+
+
+	glPushMatrix();
+	material_planet();
+	glEnable(GL_LIGHTING);
+
+	glRotatef(p.arot, 0.0f, 1.0f, 0.0f);
+	glTranslatef(p.distance, 0.0f, 0.0f);
+
+	//lean
+	//glRotatef(90, 1.0f, 0.0f, 0.0f);
+
+	glRotatef(p.srot, 0.0f, 0.0f, 1.0f);
+
+	gluQuadricTexture(e_tex, GLU_TRUE);
+	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
+	glEnable(GL_TEXTURE_2D);
+	//glTexEnvf(GL_TEXTURE_2D, GL_TEXTURE_EVN_MODE, GL_REPLACE);
+	glBindTexture(GL_TEXTURE_2D, all_texture[4]);
+	//std::cout << all_texture[4] << std::endl;
+	
+	//glColor3ub(0, 0, 255);
+
+	gluSphere(e_tex, p.radius, 15.0f, 15.0f);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//glDisable(GL_TEXTURE_2D);
+
+	glPopAttrib();
+	gluQuadricTexture(e_tex, GLU_FALSE);
+
+
+	p.arot += 1.0f;
+	if (p.arot >= 360.0f)
+		p.arot = int(p.arot)%360;
+	p.srot += 5.0f;
+	//std::cout << p.srot << std::endl;
+	if (p.srot >= 360.0f)
+		p.srot = int(p.arot) % 360;
+
+	glPopMatrix();
+}
+
+//////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -424,7 +473,8 @@ void RenderScene(void)
 	draw_milky_way(-500+ex, -500 + ey, -500 + ez, 1000.0f, 1000.0f, 1000.0f);
 	sun();
 	earth();
-	
+	draw_planet(mars);
+	//draw_planet(venus);
 	//earth 
 	
 	//glPopMatrix();
