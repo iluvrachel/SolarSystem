@@ -19,7 +19,7 @@ void Camera::rotateView(float angle, float x, float y, float z)
 
 	/** 计算方向向量 */
 	vec3 view = at - eye;
-	std::cout <<"x:"<< x << std::endl;
+	
 	//std::cout << "eye:" << eye << std::endl;
 	/** 计算 sin 和cos值 */
 	float cosTheta = (float)cos(angle);
@@ -50,11 +50,14 @@ void Camera::setViewByMouse(int x, int y)
 {
 	POINT mousePos;                                   /**< 保存当前鼠标位置 */
 	
-	int middleX = GetSystemMetrics(SM_CXSCREEN) >> 1; /**< 得到屏幕宽度的一半 */
-	int middleY = GetSystemMetrics(SM_CYSCREEN) >> 1; /**< 得到屏幕高度的一半 */
+	//int middleX = GetSystemMetrics(SM_CXSCREEN) >> 1; /**< 得到屏幕宽度的一半 */
+	//int middleY = GetSystemMetrics(SM_CYSCREEN) >> 1; /**< 得到屏幕高度的一半 */
 	float angleY = 0.0f;                              /**< 摄像机左右旋转角度 */
 	float angleZ = 0.0f;                              /**< 摄像机上下旋转角度 */
 	static float currentRotX = 0.0f;
+
+	int middleX = x;
+	int middleY = y;
 
 	/** 得到当前鼠标位置 */
 	GetCursorPos(&mousePos);
@@ -63,9 +66,9 @@ void Camera::setViewByMouse(int x, int y)
 	/** 如果鼠标没有移动,则不用更新 */
 	if ((mousePos.x == middleX) && (mousePos.y == middleY))
 		return;
-
+	//std::cout << "x:" << x << " y"<<y<<std::endl;
 	/** 设置鼠标位置在屏幕中心 */
-	SetCursorPos(middleX, middleY);
+	SetCursorPos(x, y);
 
 	/**< 得到鼠标移动方向 */
 	angleY = (float)((middleX - mousePos.x)) / 1000.0f;
@@ -116,7 +119,6 @@ void Camera::setViewByMouse(int x, int y)
 	{
 		/** 找到与旋转方向垂直向量 */
 		vec3 vAxis = at - eye;
-		vec3 temp = up;
 		vec3 vAxis2 = cross(vAxis, up);
 		vec3 vAxis3 = normalize(vAxis2);
 

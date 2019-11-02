@@ -127,6 +127,7 @@ void init()
 //static GLint pixellength;
 //static GLubyte* pixeldata;
 
+POINT clickPos;
 void Mouse(int button, int state, int x, int y) //处理鼠标点击
 {
 	if (button == 3 || button == 4) {
@@ -143,6 +144,7 @@ void Mouse(int button, int state, int x, int y) //处理鼠标点击
 	
 	if (state == GLUT_DOWN) {
 		//currentTransform = TRANSFORM_ROTATE;
+		GetCursorPos(&clickPos);
 		oldmx = x, oldmy = y;
 	}
 	
@@ -520,7 +522,9 @@ Camera cam;
 
 void motion(int x, int y)
 {
-	cam.setViewByMouse(x,y);
+	//std::cout << x << std::endl;
+
+	cam.setViewByMouse(clickPos.x, clickPos.y);
 
 	glutPostRedisplay();
 }
