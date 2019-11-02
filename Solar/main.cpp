@@ -5,6 +5,7 @@
 #include<vector>
 #include<string.h>
 #include "planet.h"
+#include "camera.h"
 #pragma comment(lib, "glew32.lib")
 
 // camera
@@ -15,6 +16,7 @@ static int oldmy = -1, oldmx = -1; //du是视点绕y轴的角度,opengl里默认y轴是上方向
 float radius = 1000.0;
 float rotateAngle = 0.0;
 float upAngle = 0.0;
+int camera_mode = 2;
 
 GLint matrixLocation;
 //int currentTransform = TRANSFORM_ROTATE;    // 设置当前变换
@@ -120,10 +122,10 @@ void init()
 	
 }
 
-static GLint imagewidth;
-static GLint imageheight;
-static GLint pixellength;
-static GLubyte* pixeldata;
+//static GLint imagewidth;
+//static GLint imageheight;
+//static GLint pixellength;
+//static GLubyte* pixeldata;
 
 void Mouse(int button, int state, int x, int y) //处理鼠标点击
 {
@@ -146,6 +148,7 @@ void Mouse(int button, int state, int x, int y) //处理鼠标点击
 	
 }
 
+
 GLfloat deltax = 0.0f;
 GLfloat deltay = 0.0f;
 void onMouseMove(int x, int y) //处理鼠标拖动
@@ -155,13 +158,69 @@ void onMouseMove(int x, int y) //处理鼠标拖动
 	
 	deltay = y - oldmy; //鼠标在窗口y轴方向上的改变加到视点的y坐标上，就上下转了
 
-	//std::cout << deltax << std::endl;
+	//std::cout << x << std::endl;
 	rotateAngle += deltax;
 	upAngle += deltay;
 
 	oldmx = x, oldmy = y; //把此时的鼠标坐标作为旧值，为下一次计算增量做准备
 
 }
+
+// 追踪观察点的方向
+static GLfloat s_eye[] = { 500,8.0,0 };
+static GLfloat s_at[] = { 0.0,0.0,0.0 };
+static GLfloat s_angle = -90.0;                    //如果初始角度设置为0则初始面向X轴正方向，设置为-90面向
+												   //Z轴负方向，符合默认情况下的设计习惯。
+int speed = 5;
+float PI = 3.14159f;
+float rad = float(PI*s_angle / 180.0f);
+
+
+void keyboard(unsigned char key, int x, int y)
+{
+
+	
+	rad = float(PI*s_angle / 180.0f);                    //计算SIN和COS函数中需要的参数。
+															   // 前进,后退请求
+	switch (key) {
+	case 'w':
+		s_eye[2] += (float)sin(rad) * speed;
+		s_eye[0] += (float)cos(rad) * speed;
+		//如果按上方向键，沿着转换角度后的方向前进，speed为每次前进的步长，通过sin和cos函数实现沿着现
+		//有角度方向前进。
+		break;
+	case 's':
+		s_eye[2] -= (float)sin(rad) * speed;
+		s_eye[0] -= (float)cos(rad) * speed;
+		//如果按下方向键，沿着转换角度后的方向后退，speed为每次前进的步长，通过sin和cos函数实现沿着现
+		//有角度方向前进。
+		break;
+	case 'a':
+		s_angle -= 2.0;                        //每按一次左键，旋转2度。
+		break;
+	case 'd':
+		s_angle += 2.0;                        //每按一次左键，旋转2度。
+		break;
+	case 033:
+		// Esc按键
+		exit(EXIT_SUCCESS);
+		break;
+	}
+
+	// 观察点
+	s_at[0] = float(s_eye[0] + 100 * cos(rad));
+	s_at[2] = float(s_eye[2] + 100 * sin(rad));
+	s_at[1] = s_eye[1];
+	//观察点可以设置的更远一些，如果设置的更小可能导致不能看到较远的物体，也是通过sin和cos函数实现
+	//向前进方向去设置观察点。
+	// 设置观察点
+	//glLoadIdentity();
+	glutPostWindowRedisplay(mainWindow);
+}
+
+
+
+
 
 void material_sun()                               
 {
@@ -297,6 +356,9 @@ void earth()
 Planet mars =  Planet(2.0f, 2.0f, 10.0f, all_texture[4], 200.0f);
 //Planet venus = Planet(2.0f, 2.0f, 10.0f, all_texture[4], 250.0f);
 
+float arot = 0.0f;
+float srot = 0.0f;
+
 void draw_planet(Planet &p)
 {
 	//std::cout << all_texture[1] << std::endl;
@@ -306,13 +368,13 @@ void draw_planet(Planet &p)
 	material_planet();
 	glEnable(GL_LIGHTING);
 
-	glRotatef(p.arot, 0.0f, 1.0f, 0.0f);
+	glRotatef(arot, 0.0f, 1.0f, 0.0f);
 	glTranslatef(p.distance, 0.0f, 0.0f);
 
 	//lean
 	//glRotatef(90, 1.0f, 0.0f, 0.0f);
 
-	glRotatef(p.srot, 0.0f, 0.0f, 1.0f);
+	glRotatef(srot, 0.0f, 0.0f, 1.0f);
 
 	gluQuadricTexture(e_tex, GLU_TRUE);
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
@@ -331,13 +393,13 @@ void draw_planet(Planet &p)
 	gluQuadricTexture(e_tex, GLU_FALSE);
 
 
-	p.arot += 1.0f;
-	if (p.arot >= 360.0f)
-		p.arot = int(p.arot)%360;
-	p.srot += 5.0f;
+	arot += p.arot;
+	if (arot >= 360.0f)
+		arot = int(arot)%360;
+	srot += p.srot;
 	//std::cout << p.srot << std::endl;
-	if (p.srot >= 360.0f)
-		p.srot = int(p.arot) % 360;
+	if (srot >= 360.0f)
+		srot = int(arot) % 360;
 
 	glPopMatrix();
 }
@@ -454,13 +516,40 @@ void draw_milky_way(float x, float y, float z, float width, float height, float 
 
 }
 
+Camera cam;
+
+void motion(int x, int y)
+{
+	cam.setViewByMouse(x,y);
+
+	glutPostRedisplay();
+}
+
 void RenderScene(void)
 {
 	float ex = radius * cos(upAngle * M_PI / 180.0) * sin(rotateAngle * M_PI / 180.0);
 	float ey = radius * sin(upAngle * M_PI / 180.0);
 	float ez = radius * cos(upAngle * M_PI / 180.0) * cos(rotateAngle * M_PI / 180.0);
+
+	//s_at[0] = float(s_eye[0] + 100 * cos(rad));
+	//s_at[2] = float(s_eye[2] + 100 * sin(rad));
+	//s_at[1] = s_eye[1];
 	glLoadIdentity();
-	gluLookAt(ex, ey, ez, 0, 0, 0, 0, 1, 0);
+	//if (camera_mode == 1) 
+	//{
+	//	gluLookAt(ex, ey, ez, 0, 0, 0, 0, 1, 0);
+	//}
+	//else
+	//{
+
+	//	gluLookAt(s_eye[0], s_eye[1], s_eye[2],
+	//		s_at[0], s_at[1], s_at[2],
+	//		0.0, 1.0, 0.0);
+	//}
+	//
+	cam.view2();
+	//cam.view1(radius, rotateAngle, upAngle);
+	//gluLookAt(ex, ey, ez, 0, 0, 0, 0, 1, 0);
 	static float fMoonRot = 0.0f;
 	static float fEarthRot = 0.0f;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -525,7 +614,9 @@ int main(int argc, char **argv)
 	//SetupRC();
 	glutDisplayFunc(RenderScene);
 	glutMouseFunc(Mouse);
-	glutMotionFunc(onMouseMove);
+	//glutMotionFunc(onMouseMove);
+	glutMotionFunc(motion);
+	//glutKeyboardFunc(keyboard);
 	glutReshapeFunc(ChangeSize);
 	// 输出帮助信息
 	printHelp();

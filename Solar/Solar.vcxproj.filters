@@ -21,9 +21,15 @@
     <ClCompile Include="InitShader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="camera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="planet.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
       <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
