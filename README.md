@@ -6,6 +6,6 @@ solar system with opengl
 
 ## TODO
 - [x] reduce memory usage
-- [ ] camera travel
-- [ ] other planets
-- [ ] Sphere skybox
+- [x] camera travel
+- [x] other planets
+~~Sphere skybox~~

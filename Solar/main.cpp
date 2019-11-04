@@ -68,7 +68,7 @@ GLUquadricObj* e_tex = gluNewQuadric();//texture
 //GLuint moon_tex = load_texture("moon.jpg");
 //GLuint sky_tex = load_texture("sky.png");
 
-const int img_num = 5;
+const int img_num = 11;
 GLuint all_texture[img_num];
 texture_data TextureImage[img_num];// 创建纹理的存储空间
 //memset(TextureImage,0,sizeof(void *) * 4);
@@ -83,6 +83,13 @@ void add_textures() // 载入位图(调用上面的代码)并转换成纹理
 	TextureImage[2] = load_texture2("moon.jpg");
 	TextureImage[3] = load_texture2("sky.png");
 	TextureImage[4] = load_texture2("mars.jpg");
+	TextureImage[5] = load_texture2("mercury.jpg");
+	TextureImage[6] = load_texture2("venus.jpg");
+	TextureImage[7] = load_texture2("jupiter.jpg");
+	TextureImage[8] = load_texture2("saturn.jpg");
+	TextureImage[9] = load_texture2("uranus.jpg");
+	TextureImage[10] = load_texture2("neptune.jpg");
+
 
 	glGenTextures(img_num, &all_texture[0]); // 创建纹理
 	for (int i = 0; i < img_num; i++)
@@ -316,7 +323,7 @@ void earth()
 	static float sEarthRot = 0.0f;
 
 	glRotatef(aEarthRot, 0.0f, 1.0f, 0.0f);
-	glTranslatef(150.0f, 0.0f, 0.0f);
+	glTranslatef(300.0f, 0.0f, 0.0f);
 	//glPushMatrix();
 
 	glRotatef(90, 1.0f, 0.0f, 0.0f);
@@ -352,10 +359,10 @@ void earth()
 	gluSphere(e_tex, 4.0f, 15.0f, 15.0f);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	aEarthRot += 1.0f;
+	aEarthRot += 360.0 / (365.0*24.0);
 	if (aEarthRot >= 360.0f)
 		aEarthRot = 0.0f;
-	sEarthRot += 5.0f;
+	sEarthRot += (360.0 / 24.0) * 0.2; // multi 0.2 in order to slow it down for observe
 	//std::cout << sEarthRot << std::endl;
 	if (sEarthRot >= 360.0f)
 		sEarthRot = 0.0f;
@@ -378,13 +385,23 @@ void earth()
 // define planets
 //other_planet mars = { 2.0f, 2.0f, 10.0f, all_texture[4], 200.0f };
 
-Planet mars =  Planet(2.0f, 2.0f, 10.0f, all_texture[4], 200.0f);
-//Planet venus = Planet(2.0f, 2.0f, 10.0f, all_texture[4], 250.0f);
 
-float arot = 0.0f;
-float srot = 0.0f;
+// assume that sun-earth distance is 300,earth radius is 15
+// all data is not totally accurate, and some are modified to have a better visual effect
 
-void draw_planet(Planet &p)
+Planet mars =  Planet(25.19f, 686.0f, 15 * 0.532, all_texture[4], 300.0*1.52);
+Planet mercury = Planet(58.64f, 87.0f, 15 * 0.382, all_texture[5], 300.0*0.38);
+Planet venus = Planet(-243.0f, 224.7f, 15 * 0.95, all_texture[6], 300.0*0.72);
+Planet jupiter = Planet(12.13f, 433.6f, 15 * 11, all_texture[7], 300.0*5.2);
+Planet saturn = Planet(26.73f, 1075.2f, 15 * 9.14, all_texture[8], 300.0*9.5);
+Planet uranus = Planet(97.73f, 3068.0f, 15 * 4.0, all_texture[9], 300.0*19.2);
+Planet neptune = Planet(28.32f, 6018.0f, 15 * 3.8, all_texture[10], 300.0* 25);
+
+
+//float arot = 0.0f;
+//float srot = 0.0f;
+
+void draw_planet(Planet &p,GLuint tex)
 {
 	//std::cout << all_texture[1] << std::endl;
 
@@ -393,19 +410,19 @@ void draw_planet(Planet &p)
 	material_planet();
 	glEnable(GL_LIGHTING);
 
-	glRotatef(arot, 0.0f, 1.0f, 0.0f);
+	glRotatef(p.counter_a, 0.0f, 1.0f, 0.0f);
 	glTranslatef(p.distance, 0.0f, 0.0f);
 
 	//lean
-	//glRotatef(90, 1.0f, 0.0f, 0.0f);
+	glRotatef(90, 1.0f, 0.0f, 0.0f);
 
-	glRotatef(srot, 0.0f, 0.0f, 1.0f);
+	glRotatef(p.counter_s, 0.0f, 0.0f, 1.0f);
 
 	gluQuadricTexture(e_tex, GLU_TRUE);
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_TEXTURE_2D);
 	//glTexEnvf(GL_TEXTURE_2D, GL_TEXTURE_EVN_MODE, GL_REPLACE);
-	glBindTexture(GL_TEXTURE_2D, all_texture[4]);
+	glBindTexture(GL_TEXTURE_2D, tex);
 	//std::cout << all_texture[4] << std::endl;
 	
 	//glColor3ub(0, 0, 255);
@@ -418,13 +435,13 @@ void draw_planet(Planet &p)
 	gluQuadricTexture(e_tex, GLU_FALSE);
 
 
-	arot += p.arot;
-	if (arot >= 360.0f)
-		arot = int(arot)%360;
-	srot += p.srot;
+	p.counter_a += 360.0/(p.arot*24.0);
+	if (p.counter_a >= 360.0f)
+		p.counter_a = int(p.counter_a)%360;
+	p.counter_s += (360.0/p.srot) * 0.2;
 	//std::cout << p.srot << std::endl;
-	if (srot >= 360.0f)
-		srot = int(arot) % 360;
+	if (p.counter_s >= 360.0f)
+		p.counter_s = int(p.counter_s) % 360;
 
 	glPopMatrix();
 }
@@ -574,10 +591,16 @@ void RenderScene(void)
 
 	//sun
 	//draw_milky_way(-500+ex, -500 + ey, -500 + ez, 1000.0f, 1000.0f, 1000.0f);
-	draw_milky_way(-500+cam.eye.x, -500+cam.eye.y, -500+cam.eye.z, 1000.0f, 1000.0f, 1000.0f);
+	draw_milky_way(-1000+cam.eye.x, -1000+cam.eye.y, -1000+cam.eye.z, 2000.0f, 2000.0f, 2000.0f);
 	sun();
 	earth();
-	draw_planet(mars);
+	draw_planet(mars, all_texture[4]);
+	draw_planet(mercury, all_texture[5]);
+	draw_planet(venus, all_texture[6]);
+	draw_planet(jupiter, all_texture[7]);
+	draw_planet(saturn, all_texture[8]);
+	draw_planet(uranus, all_texture[9]);
+	draw_planet(neptune, all_texture[10]);
 	//draw_planet(venus);
 	//earth 
 	
@@ -598,7 +621,7 @@ void ChangeSize(GLsizei w, GLsizei h)
 	fAspect = (GLfloat)w / (GLfloat)h;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0f, fAspect, 1.0, 4000);
+	gluPerspective(90.0f, fAspect, 1.0, 10000);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
