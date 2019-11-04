@@ -133,10 +133,37 @@ void Camera::setViewByMouse(int x, int y)
 
 void Camera::yawCamera(float speed)
 {
+	vec3 yaw;
+	vec3 crossProduct = at - eye;
+	crossProduct = cross(crossProduct, up);
+
+	// Normalize the strafe vector
+	yaw = normalize(crossProduct);
+
+	eye.x += yaw.x * speed;
+	eye.z += yaw.z * speed;
+
+	// Add the strafe vector to our view
+	at.x += yaw.x * speed;
+	at.z += yaw.z * speed;
+
 }
 
 void Camera::moveCamera(float speed)
 {
+	/** 计算方向向量 */
+	vec3 vector = at - eye;
+	vector = normalize(vector);         /**< 单位化 */
+
+										 /** 更新摄像机 */
+	eye.x += vector.x * speed;    /**< 根据速度更新位置 */
+	eye.z += vector.z * speed;
+	eye.y += vector.y * speed;
+	at.x += vector.x * speed;        /**< 根据速度更新方向 */
+	at.z += vector.z * speed;
+	at.y += vector.y * speed;
+
+
 }
 
 void Camera::view2()

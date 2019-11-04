@@ -17,6 +17,8 @@ float radius = 1000.0;
 float rotateAngle = 0.0;
 float upAngle = 0.0;
 int camera_mode = 2;
+Camera cam;
+
 
 GLint matrixLocation;
 //int currentTransform = TRANSFORM_ROTATE;    // 设置当前变换
@@ -186,22 +188,16 @@ void keyboard(unsigned char key, int x, int y)
 															   // 前进,后退请求
 	switch (key) {
 	case 'w':
-		s_eye[2] += (float)sin(rad) * speed;
-		s_eye[0] += (float)cos(rad) * speed;
-		//如果按上方向键，沿着转换角度后的方向前进，speed为每次前进的步长，通过sin和cos函数实现沿着现
-		//有角度方向前进。
+		cam.moveCamera(10);
 		break;
 	case 's':
-		s_eye[2] -= (float)sin(rad) * speed;
-		s_eye[0] -= (float)cos(rad) * speed;
-		//如果按下方向键，沿着转换角度后的方向后退，speed为每次前进的步长，通过sin和cos函数实现沿着现
-		//有角度方向前进。
+		cam.moveCamera(-10);
 		break;
 	case 'a':
-		s_angle -= 2.0;                        //每按一次左键，旋转2度。
+		cam.yawCamera(-10);
 		break;
 	case 'd':
-		s_angle += 2.0;                        //每按一次左键，旋转2度。
+		cam.yawCamera(10);
 		break;
 	case 033:
 		// Esc按键
@@ -518,7 +514,7 @@ void draw_milky_way(float x, float y, float z, float width, float height, float 
 
 }
 
-Camera cam;
+
 
 void motion(int x, int y)
 {
@@ -620,7 +616,7 @@ int main(int argc, char **argv)
 	glutMouseFunc(Mouse);
 	//glutMotionFunc(onMouseMove);
 	glutMotionFunc(motion);
-	//glutKeyboardFunc(keyboard);
+	glutKeyboardFunc(keyboard);
 	glutReshapeFunc(ChangeSize);
 	// 输出帮助信息
 	printHelp();
