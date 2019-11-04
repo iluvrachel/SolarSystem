@@ -8,4 +8,5 @@ solar system with opengl
 - [x] reduce memory usage
 - [x] camera travel
 - [x] other planets
-~~Sphere skybox~~
+- [ ] Saturn's ring
+- [ ] bgm
