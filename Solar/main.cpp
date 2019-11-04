@@ -16,7 +16,7 @@ static int oldmy = -1, oldmx = -1; //du是视点绕y轴的角度,opengl里默认y轴是上方向
 float radius = 1000.0;
 float rotateAngle = 0.0;
 float upAngle = 0.0;
-int camera_mode = 2;
+bool camera_mode = false;
 Camera cam;
 
 
@@ -155,18 +155,41 @@ void Mouse(int button, int state, int x, int y) //处理鼠标点击
 
 GLfloat deltax = 0.0f;
 GLfloat deltay = 0.0f;
-void onMouseMove(int x, int y) //处理鼠标拖动
+//void onMouseMove(int x, int y) //处理鼠标拖动
+//{
+//
+//	deltax = x - oldmx; //鼠标在窗口x轴方向上的增量加到视点绕y轴的角度上，这样就左右转了
+//	
+//	deltay = y - oldmy; //鼠标在窗口y轴方向上的改变加到视点的y坐标上，就上下转了
+//
+//	//std::cout << x << std::endl;
+//	rotateAngle += deltax;
+//	upAngle += deltay;
+//
+//	oldmx = x, oldmy = y; //把此时的鼠标坐标作为旧值，为下一次计算增量做准备
+//
+//}
+
+void motion(int x, int y)
 {
-
-	deltax = x - oldmx; //鼠标在窗口x轴方向上的增量加到视点绕y轴的角度上，这样就左右转了
-	
-	deltay = y - oldmy; //鼠标在窗口y轴方向上的改变加到视点的y坐标上，就上下转了
-
 	//std::cout << x << std::endl;
-	rotateAngle += deltax;
-	upAngle += deltay;
+	if (camera_mode == true)
+	{
+		cam.setViewByMouse(clickPos.x, clickPos.y);
+		glutPostRedisplay();
+	}
+	else 
+	{
+		deltax = x - oldmx; //鼠标在窗口x轴方向上的增量加到视点绕y轴的角度上，这样就左右转了
 
-	oldmx = x, oldmy = y; //把此时的鼠标坐标作为旧值，为下一次计算增量做准备
+		deltay = y - oldmy; //鼠标在窗口y轴方向上的改变加到视点的y坐标上，就上下转了
+
+							//std::cout << x << std::endl;
+		rotateAngle += deltax;
+		upAngle += deltay;
+
+		oldmx = x, oldmy = y; //把此时的鼠标坐标作为旧值，为下一次计算增量做准备
+	}
 
 }
 
@@ -198,6 +221,10 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 'd':
 		cam.yawCamera(10);
+		break;
+	case 'm':
+		camera_mode = !camera_mode;
+		//std::cout << camera_mode << std::endl;
 		break;
 	case 033:
 		// Esc按键
@@ -516,38 +543,25 @@ void draw_milky_way(float x, float y, float z, float width, float height, float 
 
 
 
-void motion(int x, int y)
-{
-	//std::cout << x << std::endl;
 
-	cam.setViewByMouse(clickPos.x, clickPos.y);
-
-	glutPostRedisplay();
-}
 
 void RenderScene(void)
 {
-	float ex = radius * cos(upAngle * M_PI / 180.0) * sin(rotateAngle * M_PI / 180.0);
-	float ey = radius * sin(upAngle * M_PI / 180.0);
-	float ez = radius * cos(upAngle * M_PI / 180.0) * cos(rotateAngle * M_PI / 180.0);
 
 	//s_at[0] = float(s_eye[0] + 100 * cos(rad));
 	//s_at[2] = float(s_eye[2] + 100 * sin(rad));
 	//s_at[1] = s_eye[1];
 	glLoadIdentity();
-	//if (camera_mode == 1) 
-	//{
-	//	gluLookAt(ex, ey, ez, 0, 0, 0, 0, 1, 0);
-	//}
-	//else
-	//{
-
-	//	gluLookAt(s_eye[0], s_eye[1], s_eye[2],
-	//		s_at[0], s_at[1], s_at[2],
-	//		0.0, 1.0, 0.0);
-	//}
-	//
-	cam.view2();
+	if (camera_mode == false) 
+	{
+		cam.view1(radius, rotateAngle, upAngle);
+	}
+	if (camera_mode == true)
+	{
+		cam.view2();
+	}
+	
+	
 	//cam.view1(radius, rotateAngle, upAngle);
 	//gluLookAt(ex, ey, ez, 0, 0, 0, 0, 1, 0);
 	static float fMoonRot = 0.0f;
@@ -559,7 +573,8 @@ void RenderScene(void)
 	glLightfv(GL_LIGHT0, GL_POSITION, sun_light_position);
 
 	//sun
-	draw_milky_way(-500+ex, -500 + ey, -500 + ez, 1000.0f, 1000.0f, 1000.0f);
+	//draw_milky_way(-500+ex, -500 + ey, -500 + ez, 1000.0f, 1000.0f, 1000.0f);
+	draw_milky_way(-500+cam.eye.x, -500+cam.eye.y, -500+cam.eye.z, 1000.0f, 1000.0f, 1000.0f);
 	sun();
 	earth();
 	draw_planet(mars);
